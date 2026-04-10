@@ -8,6 +8,7 @@ import jwt from './plugins/jwt.mjs';
 import recordsRoutes from './routes/records.mjs';
 import authRoutes from './routes/auth.mjs';
 import cifrado from './routes/cifrado.mjs';
+import fastifyMailer from 'fastify-mailer';
 
 const fastify = Fastify({ logger: true });
 
@@ -18,7 +19,18 @@ fastify.register(jwt);
 fastify.register(authRoutes, { prefix: '/auth' });
 fastify.register(recordsRoutes, { prefix: '/records', onRequest: [fastify.authenticate] });
 fastify.register(cifrado, { prefix: '/cifrado' });
-
+fastify.register(fastifyMailer, {
+  defaults: { from: process.env.MAIL_FROM || 'no-reply@ejemplo.com' },
+  transport: {
+    host: process.env.MAIL_HOST || 'smtp.example.com',
+    port: Number(process.env.MAIL_PORT) || 587,
+    secure: false,
+    auth: {
+      user: process.env.MAIL_USER || 'usuario',
+      pass: process.env.MAIL_PASS || 'contraseña',
+    },
+  },
+});
 
 fastify.get('/', async (request, reply) => {
   return { api: 'version 1.0.0' }

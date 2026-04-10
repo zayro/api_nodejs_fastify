@@ -108,6 +108,18 @@ export default async function routes(fastify, options) {
         [identificacion, JSON.stringify(informacion), estado],
       );
       reply.code(201);
+      // Enviar correo si hay email en informacion
+      if (informacion.email) {
+        try {
+          await fastify.mailer.sendMail({
+            to: informacion.email,
+            subject: 'Registro exitoso',
+            text: `Hola, tu registro con identificación ${identificacion} fue guardado exitosamente.`
+          });
+        } catch (err) {
+          fastify.log.error('Error enviando correo:', err);
+        }
+      }
       return rows[0];
     },
   );

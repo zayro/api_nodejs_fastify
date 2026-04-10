@@ -41,6 +41,9 @@ importers:
       fastify-jwt:
         specifier: ^4.1.3
         version: 4.1.3
+      fastify-mailer:
+        specifier: ^2.3.1
+        version: 2.3.1(nodemailer@8.0.5)
       fastify-postgres:
         specifier: ^3.6.0
         version: 3.6.0(pg@8.20.0)
@@ -797,6 +800,12 @@ packages:
     resolution: {integrity: sha512-SmcXjwgO6x8Kw4ybiZHOhk2Sp5MCvA/qWI3aXZPXrICWi1z6bQBSXJw8PiyiiGt84w/YcikpgntkWZiEP04EEg==}
     engines: {node: '>=10'}
 
+  fastify-mailer@2.3.1:
+    resolution: {integrity: sha512-SKMkgws+nYXLW1wwZuStxfRZ/y+QFfAfIakv70VSyqxm8uHqelbDX8p8d7bFUNOTH8gg5VeQnXymrKjKD6hOJw==}
+    engines: {node: '>=10'}
+    peerDependencies:
+      nodemailer: '>=6.0.0'
+
   fastify-plugin@2.3.4:
     resolution: {integrity: sha512-I+Oaj6p9oiRozbam30sh39BiuiqBda7yK2nmSPVwDCfIBlKnT8YB3MY+pRQc2Fcd07bf6KPGklHJaQ2Qu81TYQ==}
 
@@ -1241,6 +1250,10 @@ packages:
 
   node-options-to-argv@1.0.0:
     resolution: {integrity: sha512-99rLlP+Cn/FsSV9kjpk2UmF2Ltmrpv/L9U7fUfws/MVXkeZWPpPDsQkMr79qCvSF/oTKVVJBTm5sHzmK2j6IIg==}
+
+  nodemailer@8.0.5:
+    resolution: {integrity: sha512-0PF8Yb1yZuQfQbq+5/pZJrtF6WQcjTd5/S4JOHs9PGFxuTqoB/icwuB44pOdURHJbRKX1PPoJZtY7R4VUoCC8w==}
+    engines: {node: '>=6.0.0'}
 
   nodemon@3.1.14:
     resolution: {integrity: sha512-jakjZi93UtB3jHMWsXL68FXSAosbLfY0In5gtKq3niLSkrWznrVBzXFNOEMJUfc9+Ke7SHWoAZsiMkNP3vq6Jw==}
@@ -2743,6 +2756,11 @@ snapshots:
       http-errors: 2.0.1
       steed: 1.1.3
 
+  fastify-mailer@2.3.1(nodemailer@8.0.5):
+    dependencies:
+      fastify-plugin: 3.0.1
+      nodemailer: 8.0.5
+
   fastify-plugin@2.3.4:
     dependencies:
       semver: 7.7.4
@@ -3236,6 +3254,8 @@ snapshots:
       - supports-color
 
   node-options-to-argv@1.0.0: {}
+
+  nodemailer@8.0.5: {}
 
   nodemon@3.1.14:
     dependencies:
