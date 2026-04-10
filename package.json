@@ -1,0 +1,39 @@
+{
+  "name": "api_nodejs_fastify",
+  "version": "1.0.0",
+  "description": "Configuracion Back GU Nodejs y Postgresql",
+  "main": "index.js",
+  "scripts": {
+    "dev": "nodemon src/index.mjs",
+    "start": "node src/index.mjs",
+    "start:prod": "NODE_ENV=production node src/index.mjs",
+    "db:init": "psql -U %PGUSER% -d %PGDATABASE% -f scripts/create_table.sql || psql -U $PGUSER -d $PGDATABASE -f scripts/create_table.sql",
+    "db:init:mariadb": "mysql -u root -pfastify_auth fastify_auth < scripts/create_users_table.sql",
+    "test": "tap test/**/*.test.mjs"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "@fastify/jwt": "^10.0.0",
+    "@fastify/mysql": "^5.0.2",
+    "@fastify/postgres": "^6.0.2",
+    "@fastify/swagger": "^9.7.0",
+    "@fastify/swagger-ui": "^5.2.5",
+    "bcrypt": "^6.0.0",
+    "dotenv": "^17.4.1",
+    "fastify": "^5.8.4",
+    "fastify-bcrypt": "^1.0.1",
+    "fastify-hashids": "^0.0.6",
+    "fastify-jwt": "^4.1.3",
+    "fastify-postgres": "^3.6.0",
+    "fastify-swagger": "^5.1.1",
+    "mysql2": "^3.22.0"
+  },
+  "devDependencies": {
+    "hashids": "^2.3.0",
+    "nodemon": "^3.1.14",
+    "tap": "^21.6.3"
+  },
+  "type": "module"
+}
