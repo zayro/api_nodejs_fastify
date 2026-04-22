@@ -9,25 +9,40 @@ import recordsRoutes from './routes/records.mjs';
 import authRoutes from './routes/auth.mjs';
 import cifrado from './routes/cifrado.mjs';
 import fastifyMailer from 'fastify-mailer';
+import cors from '@fastify/cors';
+import fastifyBcrypt from 'fastify-bcrypt';
+import fastifyHashids from "fastify-hashids";
 
 const fastify = Fastify({ logger: true });
+
+fastify.register(cors, {
+  origin: '*', // En un entorno de producción, es recomendable limitar esto a los dominios específicos
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+});
 
 fastify.register(swagger);
 fastify.register(db);
 fastify.register(mariadb);
 fastify.register(jwt);
+fastify.register(fastifyBcrypt, {
+  saltWorkFactor: 10
+});
+fastify.register(fastifyHashids, {
+    salt: process.env.HASHIDS_SALT || "supersecreto",
+    minLength: 8,
+  });
 fastify.register(authRoutes, { prefix: '/auth' });
 fastify.register(recordsRoutes, { prefix: '/records', onRequest: [fastify.authenticate] });
 fastify.register(cifrado, { prefix: '/cifrado' });
 fastify.register(fastifyMailer, {
-  defaults: { from: process.env.MAIL_FROM || 'no-reply@ejemplo.com' },
+  defaults: { from: process.env.SMTP_FROM || 'no-reply@ejemplo.com' },
   transport: {
-    host: process.env.MAIL_HOST || 'smtp.example.com',
-    port: Number(process.env.MAIL_PORT) || 587,
-    secure: false,
+    host: process.env.SMTP_HOST || 'smtp.socketlabs.com',
+    port: Number(process.env.SMTP_PORT) || 587,
+    secure: true,
     auth: {
-      user: process.env.MAIL_USER || 'usuario',
-      pass: process.env.MAIL_PASS || 'contraseña',
+      user: process.env.SMTP_USER || 'server23771',
+      pass: process.env.SMTP_PASSWORD || 's7D5Cfb9FRm43NaSw26A',
     },
   },
 });

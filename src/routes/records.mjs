@@ -1,10 +1,5 @@
-import fastifyHashids from "fastify-hashids";
-
 export default async function routes(fastify, options) {
-  await fastify.register(fastifyHashids, {
-    salt: process.env.HASHIDS_SALT || "supersecreto",
-    minLength: 8,
-  });
+
 
   fastify.get("/", async (request, reply) => {
     return { data: "hello world world" };
@@ -78,7 +73,7 @@ export default async function routes(fastify, options) {
       schema: {
         body: {
           type: "object",
-          required: ["identificacion", "informacion", "estado"],
+          required: ["identificacion", "informacion"],
           properties: {
             identificacion: { type: "string" },
             informacion: { type: "object" },
@@ -89,6 +84,15 @@ export default async function routes(fastify, options) {
           },
         },
         response: {
+          200: {
+            type: "object",
+            properties: {
+              identificacion: { type: "string" },
+              informacion: { type: "object" },
+              estado: { type: "string" },
+              created_at: { type: "string", format: "date-time" },
+            },
+          },
           201: {
             type: "object",
             properties: {
@@ -102,25 +106,28 @@ export default async function routes(fastify, options) {
       },
     },
     async (request, reply) => {
-      const { identificacion, informacion, estado } = request.body;
-      const { rows } = await fastify.pg.query(
-        "INSERT INTO registros_usuarios(identificacion, informacion, estado) VALUES($1, $2, $3) RETURNING *",
-        [identificacion, JSON.stringify(informacion), estado],
+      const { identificacion, informacion } = request.body;
+      
+      // Intenta actualizar primero para evitar errores de clave única o insertar duplicados
+      const updateResult = await fastify.pg.query(
+        "UPDATE hv.registros_usuarios SET informacion = $1 WHERE identificacion = $2 RETURNING *",
+        [JSON.stringify(informacion), identificacion]
       );
-      reply.code(201);
-      // Enviar correo si hay email en informacion
-      if (informacion.email) {
-        try {
-          await fastify.mailer.sendMail({
-            to: informacion.email,
-            subject: 'Registro exitoso',
-            text: `Hola, tu registro con identificación ${identificacion} fue guardado exitosamente.`
-          });
-        } catch (err) {
-          fastify.log.error('Error enviando correo:', err);
-        }
+
+      if (updateResult.rowCount > 0) {
+        reply.code(200);
+        return updateResult.rows[0];
+      } else {
+        const insertResult = await fastify.pg.query(
+          "INSERT INTO hv.registros_usuarios(identificacion, informacion) VALUES($1, $2) RETURNING *",
+          [identificacion, JSON.stringify(informacion)]
+        );
+        reply.code(201);
+        
+        return insertResult.rows[0];
       }
-      return rows[0];
     },
   );
+
+
 }
