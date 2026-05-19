@@ -1,6 +1,4 @@
 export default async function routes(fastify, options) {
-
-
   fastify.get("/", async (request, reply) => {
     return { data: "hello world world" };
   });
@@ -36,17 +34,21 @@ export default async function routes(fastify, options) {
 
   fastify.get(
     "/find/:identificacion",
+    { config: { disableHashids: true } },
     async (request, reply) => {
       // Decodifica solo el identificador recibido
-      const encode = fastify.hashids.encode('123456');
+      const encode = fastify.hashids.encode("123456");
       const decoded = fastify.hashids.decode(request.params.identificacion);
       console.log("Identificador recibido:", request.params.identificacion);
       console.log("Identificador codificado:", encode);
       console.log("Identificador decodificado:", decoded);
       if (!decoded || !decoded.length) {
-        console.error("Error al decodificar el identificador:", request.params.identificacion);
+        console.error(
+          "Error al decodificar el identificador:",
+          request.params.identificacion,
+        );
         return reply.code(400).send({ error: "Identificador inválido" });
-    }
+      }
       const identificacion = decoded[0].toString();
       const { rows } = await fastify.pg.query(
         "SELECT * FROM hv.registros_usuarios WHERE identificacion = $1",
@@ -58,6 +60,7 @@ export default async function routes(fastify, options) {
 
   fastify.get(
     "/buscar/:identificacion",
+    { config: { disableHashids: true } },
     async (request, reply) => {
       const { rows } = await fastify.pg.query(
         "SELECT * FROM hv.registros_usuarios WHERE identificacion = $1",
@@ -70,6 +73,7 @@ export default async function routes(fastify, options) {
   fastify.post(
     "/save",
     {
+      config: { disableHashids: true },
       schema: {
         body: {
           type: "object",
@@ -107,11 +111,11 @@ export default async function routes(fastify, options) {
     },
     async (request, reply) => {
       const { identificacion, informacion } = request.body;
-      
+
       // Intenta actualizar primero para evitar errores de clave única o insertar duplicados
       const updateResult = await fastify.pg.query(
         "UPDATE hv.registros_usuarios SET informacion = $1 WHERE identificacion = $2 RETURNING *",
-        [JSON.stringify(informacion), identificacion]
+        [JSON.stringify(informacion), identificacion],
       );
 
       if (updateResult.rowCount > 0) {
@@ -120,14 +124,12 @@ export default async function routes(fastify, options) {
       } else {
         const insertResult = await fastify.pg.query(
           "INSERT INTO hv.registros_usuarios(identificacion, informacion) VALUES($1, $2) RETURNING *",
-          [identificacion, JSON.stringify(informacion)]
+          [identificacion, JSON.stringify(informacion)],
         );
         reply.code(201);
-        
+
         return insertResult.rows[0];
       }
     },
   );
-
-
 }

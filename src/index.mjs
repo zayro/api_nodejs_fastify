@@ -28,24 +28,40 @@ fastify.register(fastifyBcrypt, {
   saltWorkFactor: 10
 });
 fastify.register(fastifyHashids, {
+  hashidsOptions: {
     salt: process.env.HASHIDS_SALT || "supersecreto",
     minLength: 8,
-  });
+    idRegexp: null // Desactiva la intercepción automática de IDs para evitar errores 400 inesperados
+  }
+});
 fastify.register(authRoutes, { prefix: '/auth' });
 fastify.register(recordsRoutes, { prefix: '/records', onRequest: [fastify.authenticate] });
 fastify.register(cifrado, { prefix: '/cifrado' });
+
+
 fastify.register(fastifyMailer, {
-  defaults: { from: process.env.SMTP_FROM || 'no-reply@ejemplo.com' },
+  defaults: { from: process.env.SMTP_FROM || 'noresponder@genteutil.net' },
   transport: {
     host: process.env.SMTP_HOST || 'smtp.socketlabs.com',
     port: Number(process.env.SMTP_PORT) || 587,
-    secure: true,
+    secure: false, // <-- IMPORTANTE: Falso para el puerto 587 (usa STARTTLS)
     auth: {
       user: process.env.SMTP_USER || 'server23771',
       pass: process.env.SMTP_PASSWORD || 's7D5Cfb9FRm43NaSw26A',
     },
   },
 });
+
+
+/*
+fastify.register(fastifyMailer, {
+  defaults: { from: process.env.SMTP_FROM || 'no-reply@ejemplo.com' }, // Reemplaza con tu correo
+  transport: {
+    sendmail: true,
+    newline: 'unix'
+  }
+});
+*/
 
 fastify.get('/', async (request, reply) => {
   return { api: 'version 1.0.0' }

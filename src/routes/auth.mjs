@@ -1,6 +1,7 @@
 export default async function authRoutes(fastify, options) {
 
   fastify.post('/login', {
+    config: { disableHashids: true },
     schema: {
       body: {
         type: 'object',
@@ -75,6 +76,7 @@ export default async function authRoutes(fastify, options) {
   });
 
   fastify.post('/register', {
+    config: { disableHashids: true },
     schema: {
       body: {
         type: 'object',
@@ -132,6 +134,7 @@ export default async function authRoutes(fastify, options) {
       );
 
       if (existingUsers.length > 0) {
+        console.log('existingUsers',existingUsers);
         return reply.code(400).send({ message: 'El correo electrónico, nombre de usuario o identificación ya se encuentran registrados.' });
       }
 
@@ -152,14 +155,26 @@ export default async function authRoutes(fastify, options) {
             const identificadorCodificado = fastify.hashids.encode(Number(identificacion));
             const link = `${host}/update-status/${identificadorCodificado}`;
             await fastify.mailer.sendMail({
-              to: informacion.email,
+              to: email,
               subject: 'Registro exitoso',
               text: `Hola, tu registro con identificación ${identificacion} fue guardado exitosamente.\n\nPara activar tu registro, haz clic en el siguiente enlace:\n${link}\n\nEnvía un PATCH a ese endpoint con el body: { "estado": "activo" }.`
             });
           } catch (err) {
-            fastify.log.error('Error enviando correo:', err);
+            // Mostrar un log limpio con lo más importante
+            fastify.log.error(`Falló el envío de correo. Código: ${err.code}, Mensaje: ${err.message}`);
+            
+            // Si el error viene de un rechazo del servidor SMTP, suele traer estos datos:
+            if (err.response) {
+              fastify.log.error(`Respuesta del servidor SMTP: ${err.response}`);
+              fastify.log.error(`Comando que falló: ${err.command}`);
+            }
+            // Mostrar todo el objeto crudo en consola para depuración máxima
+            console.error('--- DETALLE COMPLETO DEL ERROR DE MAIL ---');
+            console.error(err);
+            console.error('------------------------------------------');
           }
         }
+        
             
 
       return reply.code(201).send({
