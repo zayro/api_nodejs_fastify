@@ -1,10 +1,10 @@
 module.exports = {
   apps: [
     {
-      name: 'api-nodejs-fastify',
+      name: 'api-hv',
       script: 'src/index.mjs',
-      instances: 'max',
-      exec_mode: 'cluster',
+      instances: 1,
+      exec_mode: 'fork',
       env: {
         NODE_ENV: 'production'
       }
