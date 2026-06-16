@@ -71,7 +71,7 @@ export default async function authRoutes(fastify, options) {
       }
 
       const user = rows[0];
-      console.log("Usuario encontrado:", user); 
+      console.log("Usuario encontrado:", user);
       // Comparacion segura usando bcrypt
       const isMatch = await fastify.bcrypt.compare(password, user.password);
       if (!isMatch) {
@@ -83,7 +83,7 @@ export default async function authRoutes(fastify, options) {
         username: user.username,
         identificacion: user.identificacion,
         estado: user.estado,
-      });
+      }, { expiresIn: '8h' });
       console.log("Token generado:", token);
       return reply.code(200).send({
         success: true,
@@ -267,4 +267,32 @@ export default async function authRoutes(fastify, options) {
       return { status: "success", message: "Registro activado exitosamente" };
     },
   );
+
+  fastify.get(
+    "/update-password/:identificacion",
+    {
+      config: { disableHashids: true },
+    },
+
+    async (request, reply) => {
+      console.log("identificacion recibida", request.params.identificacion);
+
+      // Encriptar la contraseña usando bcrypt
+      const hashedPassword = await fastify.bcrypt.hash(password);
+
+
+      const { rowCount } = await fastify.pg.query(
+        "UPDATE hv.user SET password = $1 WHERE identificacion = $2",
+        [hashedPassword, identificacion],
+      );
+
+      console.log("rowCount", rowCount);
+
+      if (rowCount === 0) {
+        return reply.code(404).send({ error: "Registro no encontrado" });
+      }
+      return { status: "success", message: "Registro activado exitosamente" };
+    },
+  );
+
 }
