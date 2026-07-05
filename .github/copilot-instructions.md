@@ -35,7 +35,7 @@ Estilo y convenciones
 - Escribir pruebas minimalistas en `test/` para cada ruta nueva.
 
 Dónde registrar cambios de agente
-- Agentes personalizados: `.github/agents/` (ej: `fastify-endpoint.agent.md`).
+- Agentes personalizados: `.github/agents/` (ej: `api-fastify.agent.md`).
 
 Ejemplo de prompt para el agente
 - "Crea un endpoint POST /records que valide el body con schema X y lo inserte en la tabla records usando el plugin `db.mjs`. Añade test."

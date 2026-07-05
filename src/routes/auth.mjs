@@ -268,7 +268,7 @@ export default async function authRoutes(fastify, options) {
     },
   );
 
-  fastify.get(
+  fastify.post(
     "/update-password/:identificacion",
     {
       config: { disableHashids: true },
@@ -276,13 +276,18 @@ export default async function authRoutes(fastify, options) {
 
     async (request, reply) => {
       console.log("identificacion recibida", request.params.identificacion);
+      // Decodifica el identificador
+
+      const identificacion = request.params.identificacion;
+
+      const decoded = fastify.hashids.decode(request.params.identificacion);
+      
+       const { password, NewPassword } = request.body;
 
       // Encriptar la contraseña usando bcrypt
       const hashedPassword = await fastify.bcrypt.hash(password);
-
-
       const { rowCount } = await fastify.pg.query(
-        "UPDATE hv.user SET password = $1 WHERE identificacion = $2",
+        "UPDATE hv.users SET password = $1 WHERE identificacion = $2",
         [hashedPassword, identificacion],
       );
 
@@ -291,8 +296,86 @@ export default async function authRoutes(fastify, options) {
       if (rowCount === 0) {
         return reply.code(404).send({ error: "Registro no encontrado" });
       }
+
       return { status: "success", message: "Registro activado exitosamente" };
     },
   );
+
+  fastify.get(
+    "/recovery-password/:email",
+    {
+      config: {
+        disableHashids: true,
+        rateLimit: {
+          max: 3,
+          timeWindow: '1 hour',
+          keyGenerator: (request) => request.ip,
+        },
+      },
+    },
+    async (request, reply) => {
+      console.log("email recibido", request.params.email);
+      const { rows } = await fastify.pg.query(
+        "SELECT email FROM hv.users WHERE email = $1",
+        [request.params.email],
+      );
+    if (rows.length === 0) {
+      return reply.code(404).send({ error: "Registro no encontrado" });
+    }
+    const email = rows[0].email;
+    if (!email) {
+      return reply
+        .code(400)
+        .send({ error: "No se encontró un correo asociado a esta identificación" });
+    }
+    try {
+
+
+      const host = `${request.protocol}://${request.hostname}`;
+      const randomPassword = Math.random().toString(36).slice(-8); // Genera una contraseña temporal de 8 caracteres
+      const identificadorCodificado = fastify.hashids.encode(randomPassword);
+
+      // Encriptar la contraseña usando bcrypt
+      const hashedPassword = await fastify.bcrypt.hash(randomPassword);
+      const { rowCount } = await fastify.pg.query(
+        "UPDATE hv.users SET password = $1 WHERE email = $2",
+        [hashedPassword, email],
+      );
+
+      console.log("rowCount", rowCount);
+
+      if (rowCount === 0) {
+        return reply.code(404).send({ error: "Registro no encontrado" });
+      }
+
+
+      const link = `${host}/apiHv/auth/update-password/${identificadorCodificado}`;
+      console.log("Link de recuperación generado:", link);
+      console.log("Contraseña temporal generada:", randomPassword);
+      await fastify.mailer.sendMail({
+        to: email,
+        subject: "Recuperación de contraseña HV - Gente Util",
+        text: `Hola, para recuperar tu contraseña con identificación ${request.params.identificacion}, su nueva contraseña es: ${randomPassword} :\n`,
+      });
+      return { status: "success", message: "Correo de recuperación enviado exitosamente" };
+    } catch (err) {
+      // Mostrar un log limpio con lo más importante
+      fastify.log.error(
+        `Falló el envío de correo. Código: ${err.code}, Mensaje: ${err.message}`,
+      );  
+      // Si el error viene de un rechazo del servidor SMTP, suele traer estos datos:
+      if (err.response) {
+        fastify.log.error(`Respuesta del servidor SMTP: ${err.response}`);
+        fastify.log.error(`Comando que falló: ${err.command}`);
+      }
+      // Mostrar todo el objeto crudo en consola para depuración máxima
+      console.error("--- DETALLE COMPLETO DEL ERROR DE MAIL ---");
+      console.error(err);
+      console.error("------------------------------------------");
+      return reply
+        .code(500)
+        .send({ error: "Error interno del servidor al enviar el correo de recuperación" });
+    } 
+  });
 
 }

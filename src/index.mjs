@@ -12,6 +12,7 @@ import fastifyMailer from 'fastify-mailer';
 import cors from '@fastify/cors';
 import fastifyBcrypt from 'fastify-bcrypt';
 import fastifyHashids from "fastify-hashids";
+import rateLimit from '@fastify/rate-limit';
 
 const fastify = Fastify({ logger: true });
 
@@ -34,6 +35,7 @@ fastify.register(fastifyHashids, {
     idRegexp: null // Desactiva la intercepción automática de IDs para evitar errores 400 inesperados
   }
 });
+fastify.register(rateLimit, { global: false });
 fastify.register(authRoutes, { prefix: '/auth' });
 fastify.register(recordsRoutes, { prefix: '/records', onRequest: [fastify.authenticate] });
 fastify.register(cifrado, { prefix: '/cifrado' });
